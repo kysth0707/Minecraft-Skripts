@@ -1,0 +1,58 @@
+on sneak toggle:
+	if player is not sneaking:
+		SaveLastLoc(player)
+		wait 3 ticks
+		# broadcast "%CheckWASD(player)%"
+		set {_val} to CheckWASD(player)
+
+		push the player upward at speed 0.35
+		if {_val} is "w":
+			push the player horizontal forward at speed 1
+		else if {_val} is "s":
+			push the player horizontal forward at speed -1
+		else if {_val} is "a":
+			push the player horizontal to the right at speed -1
+		else if {_val} is "d":
+			push the player horizontal to the right at speed 1
+
+		send title "%{_val}%" with subtitle "" to player
+
+
+command /test:
+	trigger:
+		broadcast "%player's velocity%"
+
+
+function SaveLastLoc(p:player):
+	# set velocity of {_p} to new Vector 0, 0, 0
+	set {_l} to location of {_p}
+	wait 1 tick
+	teleport {_p} to {_l}
+	set {LastLoc.%{_p}%} to location of {_p}
+
+function CheckWASD(p:player) :: text:
+	if {LastLoc.%{_p}%} is not set:
+		stop
+	delete {_list::*}
+	add location 1 horizontal in front of {LastLoc.%{_p}%} to {_list::*}
+	add location -1 horizontal in front of {LastLoc.%{_p}%} to {_list::*}
+	add location -1 horizontal to the right of {LastLoc.%{_p}%} to {_list::*}
+	add location 1 horizontal to the right of {LastLoc.%{_p}%} to {_list::*}
+
+	delete {_list2::*}
+	add "w" to {_list2::*}
+	add "s" to {_list2::*}
+	add "a" to {_list2::*}
+	add "d" to {_list2::*}
+
+	set {_dis} to 10
+	set {_shortThing} to "?"
+	set {_l} to location of {_p}
+	loop 4 times:
+		# broadcast "%distance between {_list::%loop-value%} and {_l}%"
+		if distance between {_list::%loop-value%} and {_l} < {_dis}:
+			set {_dis} to distance between {_list::%loop-value%} and {_l}
+			set {_shortThing} to {_list2::%loop-value%}
+
+
+	return {_shortThing}

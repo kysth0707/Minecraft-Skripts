@@ -1,0 +1,144 @@
+#> Made By Rs_james_kim
+#> Discord 노잼#3372
+
+options:
+	@ : &f[ &2악성유저&f차단 &f]
+	우마공API전체정보URL : https://userdb.ourmc.space/api/v1/report/all?limit=1000
+	우마공APIUUIDURL : https://userdb.ourmc.space/api/v1/report/reportcount/
+
+	version : v 1.1
+
+	밴메세지 : 악성유저로 판단해 밴 처리 되었습니다.%nl%문의 : ?
+
+on load:
+	broadcast ""
+	broadcast "{@@} 악성유저 접속차단 - Rs_james_kim / {@version}"
+	broadcast ""
+
+on join:
+	if {악성유저.접속차단} is set:
+		#broadcast "%uuid of player%"
+		IsPlayerBadPlayer(player)
+
+command /test:
+	trigger:
+		IsPlayerBadPlayer(player)
+
+command /악성유저 [<text>]:
+	trigger:
+		if player is op:
+			if arg 1 is "새로고침":
+				GetBadPlayer()
+
+			else if arg 1 is "밴":
+				BadPlayerBanAlready()
+
+			else if arg 1 is "밴해제":
+				BadPlayerNoBanAlready()
+
+			else if arg 1 is "접속차단":
+				set {악성유저.접속차단} to true
+				broadcast "{@@} 악성유저 접속차단을 활성화합니다."
+
+			else if arg 1 is "접속차단해제":
+				delete {악성유저.접속차단}
+				broadcast "{@@} 악성유저 접속차단을 비활성화합니다."
+
+
+			else:
+				send "======== {@@} ========"
+				send "/악성유저 새로고침 : 플레이어 데이터를 다시 받습니다"
+				send "/악성유저 밴 : 악성유저들을 미리 밴합니다."
+				send "/악성유저 밴해제 : 악성유저들을 밴 해제합니다."
+				send "/악성유저 접속차단 : 악성유저가 접속했을 때, 즉시 밴합니다."
+				send "/악성유저 접속차단해제 : 악성유저가 접속해도 밴을 안합니다."
+				send "&a(정확도) 접속차단 > 밴"
+				send "/악성유저 접속차단 을 권장합니다"
+				send ""
+				send "{@@} &c해당 기능은 절대 서버 진행 중에 사용하지 마십시오"
+				send "&c> 큰 렉을 동반하기 때문에 주의 부탁드립니다."
+		else:
+			send "{@@} &c당신은 사용 권한이 없습니다!"
+
+function IsPlayerBadPlayer(p:player): #> 접속시 악성유저인지 판단하는 함수
+	set {_uuid} to uuid of {_p}
+	replace all "-" in {_uuid} with ""
+	set {_IsPlayerBad} to text from url "{@우마공APIUUIDURL}%{_uuid}%"
+	
+	if "%{_IsPlayerBad}%" contains """success"":true":
+		ban {_p} due to "{@밴메세지}"
+		kick {_p} due to "{@밴메세지}"
+
+function BadPlayerBanAlready(): #> 미리 밴하는 함수
+	broadcast "{@@} 악성유저 밴 중입니다.."
+	broadcast "예상시간 : %size of {BadPlayerList::*} / 20 * 2% 초 소요"
+	set {_n} to 0
+	loop {BadPlayerList::*}:
+		ban "%loop-value%" due to "{@밴메세지}"
+		add 1 to {_n}
+		wait 2 tick
+
+		if mod({_n}, 10) is 0:
+			broadcast "%loop-index% / %size of {BadPlayerList::*}%"
+
+	broadcast "{@@} 악성유저 밴 성공!"
+
+function BadPlayerNoBanAlready(): #> 밴 해제하는 함수
+	broadcast "{@@} 악성유저 밴해제 중입니다.."
+	broadcast "예상시간 : %size of {BadPlayerList::*} / 20 * 2% 초 소요"
+	set {_n} to 0
+	loop {BadPlayerList::*}:
+		unban "%loop-value%"
+		add 1 to {_n}
+		wait 2 tick
+
+		if mod({_n}, 10) is 0:
+			broadcast "%loop-index% / %size of {BadPlayerList::*}%"
+
+	broadcast "{@@} 악성유저 밴해제 성공!"
+
+
+function GetBadPlayer(): #> API 요청해서 악성유저 목록 가져오는 함수
+	broadcast "{@@} API 요청 중.."
+	set {_BadPlayerData} to text from url "{@우마공API전체정보URL}"
+
+
+	set {_IsSuccess} to first 20 characters of {_BadPlayerData}
+
+	if {_IsSuccess} doesn't contain """success"":true":
+		broadcast "{@@} API 요청 실패!"
+		stop
+	broadcast "{@@} API 요청 성공! 플레이어 데이터를 가져오는 중 입니다.."
+
+
+
+	set {_Counts::*} to {_BadPlayerData} split by """count"":"
+	set {_Counts::*} to {_Counts::2} split by ","
+	set {_BadPlayerCount} to "%{_Counts::1}%" parsed as number
+
+	broadcast "악성유저 플레이어 수 : %{_BadPlayerCount}% 명"
+
+
+
+
+	set {_Items::*} to {_BadPlayerData} split by "{""reportDate"":"
+	#broadcast "%{_Items::1}% %{_Items::2}% %{_Items::3}%"
+	#> _Items::1 은 무시
+
+	delete {BadPlayerList::*}
+
+	set {_n} to 2
+	loop {_BadPlayerCount} times:
+		set {_GetLastName::*} to {_Items::%{_n}%} split by """userName"":"""
+		set {_GetLastName::*} to {_GetLastName::2} split by """"
+		
+		add "%{_GetLastName::1}%" to {BadPlayerList::*}
+
+		add 1 to {_n}
+
+	broadcast "{@@} 악성유저 새로고침 성공!"
+
+
+
+
+	

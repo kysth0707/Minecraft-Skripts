@@ -1,0 +1,28 @@
+on tool change:
+	if {%player%.change}:
+		delete {%player%.change}
+	else:
+		wait 1 tick
+		if current hotbar slot of player is not 0 or 1 or 7 or 8:
+			if current hotbar slot of player > 4:
+				if {%player%.zoom} > 0:
+					subtract 1 from {%player%.zoom}
+			else:
+				if {%player%.zoom} < 7:
+					add 1 to {%player%.zoom}
+			broadcast "%{%player%.zoom}%"
+			set {%player%.change} to true
+			set current hotbar slot of player to 4
+		else:
+			set {%player%.change} to true
+			set current hotbar slot of player to 4
+
+on join:
+	set {%player%.zoom} to 0
+	
+on quit:
+	delete {%player%.zoom}
+
+every 1 second:
+	loop all players:
+		apply potion of slowness of tier {%loop-value%.zoom} without particles to loop-value for 1 second

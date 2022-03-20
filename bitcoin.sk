@@ -1,0 +1,42 @@
+#> 제작자 : 노잼
+#> Discord : 노잼#3372
+
+
+Options:
+	불러올개수 : 10
+
+command /비트코인목록:
+	trigger:
+		if player is op:
+			GetBitcoins()
+
+
+function GetBitcoins():
+	delete {비트코인.코드::*}
+	delete {비트코인.이름::*}
+
+	set {_BitcoinsData} to text from url "https://api.upbit.com/v1/market/all"
+	set {_tmp::*} to {_BitcoinsData} split by """market"":"""
+
+	loop {@불러올개수} times:
+		set {_tmp2::*} to {_tmp::%loop-value + 1%} split by """,""korean_name"""
+		set {_tmp3::*} to {_tmp::%loop-value + 1%} split by """english_name"":"""
+		set {_tmp4::*} to {_tmp3::2} split by """"
+		#broadcast "%{_tmp2::1}%"
+		#broadcast "%{_tmp4::1}%"
+		add "%{_tmp2::1}%" to {비트코인.코드::*}
+		add "%{_tmp4::1}%" to {비트코인.이름::*}
+	
+	GetBitcoinValue()
+
+
+function GetBitcoinValue():
+	delete {비트코인.가격::*}
+	loop size of {비트코인.코드::*} times:
+		set {_BitcoinValueData} to text from url "https://api.upbit.com/v1/ticker?markets=%{비트코인.코드::%loop-value%}%"
+		set {_tmp::*} to {_BitcoinValueData} split by """trade_price"":"
+		set {_tmp::*} to {_tmp::2} split by ","""
+		add "%{_tmp::1}%" parsed as number to {비트코인.가격::*}
+
+		broadcast "%{비트코인.이름::%loop-value%}% / %{비트코인.코드::%loop-value%}% / %{비트코인.가격::%loop-value%}%"
+	broadcast "================================="
